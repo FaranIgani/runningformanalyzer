@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RunningForm Analyzer/AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF; --soft:#FAF7F4; --ink:#1E2A30; --muted:#5B6870; --line:#E7E0D9;
+  --orange:#BF5700; --orange-ink:#FFFFFF; --orange-deep:#8F4100; --orange-text:#A24A00;
+  --tint:#FFF4EA; --tint-line:#F1CBA8;
+  --ok:#1C7C54; --ok-bg:#E3F4EB; --watch:#8E5A00; --watch-bg:#FFF0D2; --off:#B3261E; --off-bg:#FBE3E1; --na:#5B6870; --na-bg:#EEF0F1;
+  --stage:#14181B;
+  --sans:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --cond:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+[hidden]{display:none!important}
+.wrap{max-width:1040px;margin:0 auto;padding:0 clamp(16px,4vw,32px)}
+h1,h2,h3{font-family:var(--cond);margin:0;letter-spacing:-.005em}
+h2{font-size:26px;font-weight:600;line-height:1.15}
+h3{font-size:19px;font-weight:600;line-height:1.25}
+
+/* header band: burnt orange */
+.top{background:#BF5700;color:#fff}
+.top .wrap{display:flex;align-items:center;gap:18px;padding-top:26px;padding-bottom:26px}
+.mark{flex:none;width:58px;height:58px}
+.top h1{font-size:clamp(30px,5vw,46px);font-weight:700;line-height:1.02;color:#fff}
+.top p{margin:6px 0 0;font-size:18px;color:rgba(255,255,255,.92)}
+.preview{background:var(--tint);border-bottom:1px solid var(--tint-line);font-size:15px}
+.preview .wrap{padding-top:10px;padding-bottom:10px}
+main.wrap{padding-top:34px;padding-bottom:64px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 17px/1 var(--sans);padding:14px 22px;border-radius:10px;border:2px solid var(--orange);background:var(--orange);color:var(--orange-ink);cursor:pointer;text-decoration:none;min-height:48px}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent;color:var(--orange-text)}
+.btn[disabled],.btn[aria-disabled="true"]{opacity:.45;cursor:not-allowed;filter:none}
+
+/* upload */
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;min-height:300px;padding:32px 20px;border:3px dashed var(--orange);border-radius:18px;background:var(--tint);cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
+.drop:hover,.drop.over{background:color-mix(in srgb,var(--orange) 16%,var(--bg));transform:translateY(-1px)}
+.drop:focus-within{outline:3px solid var(--orange);outline-offset:4px}
+.drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.drop svg{width:64px;height:64px;color:var(--orange)}
+.drop .big{font:600 28px/1.15 var(--cond)}
+.drop .small{color:var(--muted);font-size:15px;max-width:46ch}
+.drop .link{color:var(--orange-text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.picked{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;margin-top:18px;padding:14px 18px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+.picked .fname{font-weight:600;word-break:break-all}
+.picked .fsize{color:var(--muted);font-size:15px}
+.picked .spacer{flex:1}
+.textbtn{background:none;border:0;padding:6px;color:var(--orange-text);font:600 15px var(--sans);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 20px;margin-top:18px;align-items:end}
+.field label{display:block;font-weight:500;font-size:15px;margin-bottom:5px}
+.field input[type=text],.field input[type=number]{width:100%;font:400 16px var(--sans);padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink)}
+.field .hint{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+.check{display:flex;align-items:flex-start;gap:10px;font-size:15px}
+.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--orange)}
+.go{margin-top:22px}
+.tips{margin:22px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 24px;color:var(--muted);font-size:15px}
+.tips li{padding-left:22px;position:relative}
+.tips li::before{content:"";position:absolute;left:0;top:.55em;width:10px;height:10px;border-radius:50%;background:var(--orange)}
+.err{margin-top:16px;padding:12px 16px;border-radius:10px;background:var(--off-bg);color:var(--off);border:1px solid currentColor;font-weight:500}
+
+/* progress */
+.progress{max-width:640px;margin:40px auto;text-align:center}
+.progress h2{margin-bottom:6px}
+.progress .stage{color:var(--muted);margin:8px 0 18px}
+.bar{height:16px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--orange);border-radius:999px;transition:width .35s ease}
+.bar.indet>i{width:35%;animation:slide 1.2s ease-in-out infinite alternate}
+@keyframes slide{from{margin-left:0}to{margin-left:65%}}
+.progress .pct{font:700 34px/1 var(--cond);margin-top:14px}
+.progress .note{color:var(--muted);font-size:14px;margin-top:10px}
+
+/* results */
+.vcard{background:var(--stage);border-radius:16px;overflow:hidden;line-height:0}
+.vcard video,.vcard img{display:block;width:100%;height:auto;max-height:72vh;background:#000;object-fit:contain}
+.vbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:12px;color:var(--muted);font-size:15px}
+.legend{display:flex;gap:16px;align-items:center}
+.legend i{display:inline-block;width:22px;height:5px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--soft);margin-left:auto}
+.seg label{position:relative}
+.seg input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.seg span{display:block;padding:6px 12px;border-radius:7px;font-weight:500;color:var(--ink);cursor:pointer}
+.seg input:checked+span{background:var(--orange);color:var(--orange-ink)}
+.seg input:focus-visible+span{outline:3px solid var(--orange);outline-offset:2px}
+.sample-note{color:var(--muted);font-size:14px;margin-top:10px}
+
+.report{margin-top:38px}
+.rhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding-bottom:14px;border-bottom:3px solid var(--orange)}
+.rhead h2{font-size:34px;font-weight:700}
+.rhead .meta{color:var(--muted);font-size:15px}
+.focus{margin-top:22px;padding:18px 22px;border-left:8px solid var(--orange);background:var(--tint);border-radius:0 12px 12px 0}
+.focus .k{font-weight:600;color:var(--orange-text);font-size:15px}
+.focus .v{font:600 26px/1.2 var(--cond);margin-top:2px}
+.rsec{margin-top:38px}
+.rsec>h3{font-size:22px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.mrow{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.3fr);gap:6px 16px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
+.mname{font-weight:500}
+.msub{display:block;color:var(--muted);font-size:14px;font-weight:400}
+.mval{font:400 15px var(--sans);color:var(--muted)}
+.mval b{font:700 30px/1 var(--cond);color:var(--ink);margin-right:4px;font-variant-numeric:tabular-nums}
+.mstat{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:14px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-weight:600;font-size:14px}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.watch{background:var(--watch-bg);color:var(--watch)}
+.chip.off{background:var(--off-bg);color:var(--off)} .chip.na{background:var(--na-bg);color:var(--na)}
+@media (max-width:640px){.mrow{grid-template-columns:1fr 1fr}.mstat{grid-column:1/-1}}
+.tblwrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:11px 12px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-weight:600;font-size:15px;color:var(--orange-text);border-bottom:2px solid var(--orange)}
+td.n{font:600 22px/1 var(--cond)}
+td.dash{color:var(--muted)}
+tbody th{font-weight:500}
+.tdesc{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.cap{color:var(--muted);font-size:14px;margin:8px 0 0}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 28px}
+.note{border-top:5px solid var(--line);padding-top:12px}
+.note.watch{border-top-color:var(--watch)} .note.off{border-top-color:var(--off)}
+.note p{margin:7px 0 0}
+.note .saw{color:var(--muted);font-size:15px}
+.note .tip{font-weight:500}
+.good{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.good li{padding-left:28px;position:relative}
+.good li::before{content:"";position:absolute;left:2px;top:.35em;width:16px;height:16px;border-radius:50%;background:var(--ok) center/10px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2l2.3 2.3 4.7-4.9' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.warn{padding:14px 18px;border:1px solid var(--tint-line);background:var(--tint);border-radius:12px}
+.warn ul{margin:6px 0 0;padding-left:20px}
+details{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:4px 16px;background:var(--soft)}
+summary{cursor:pointer;font-weight:600;padding:10px 0}
+details ul{margin:0 0 12px;padding-left:20px;color:var(--muted);font-size:15px}
+details li{margin:4px 0}
+
+.actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:44px;padding-top:26px;border-top:1px solid var(--line)}
+.actions .spacer{flex:1}
+.actions .sub{width:100%;color:var(--muted);font-size:14px}
+.fine{margin-top:34px;color:var(--muted);font-size:13px;max-width:72ch}
+@media print{.top,.actions,.preview,.vbar,.fine{display:none}.report{margin-top:0}}
+@media (prefers-reduced-motion: reduce){.bar>i,.drop{transition:none}.bar.indet>i{animation:none}}
+
+/* ---- browser version: player controls ---- */
+.vcard canvas{display:block;width:100%;height:auto;max-height:76vh;object-fit:contain;background:#000}
+.hidden-video{position:fixed;left:-9999px;top:0;width:320px;height:180px;opacity:0;pointer-events:none}
+.vctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin-top:12px}
+.btn.small{padding:10px 16px;min-height:44px;font-size:16px;min-width:0}
+.scrub{flex:1 1 220px;min-width:160px;accent-color:var(--orange)}
+.counter{color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums;min-width:13em}
+.togs{display:flex;flex-wrap:wrap;gap:8px}
+.tog{position:relative}
+.tog input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.tog span{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-size:15px;cursor:pointer}
+.tog span::before{content:"";width:14px;height:14px;border:2px solid var(--muted);border-radius:4px;flex:none}
+.tog input:checked+span{border-color:var(--orange);background:var(--tint)}
+.tog input:checked+span::before{border-color:var(--orange);background:var(--orange) center/10px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.2l2.3 2.3 4.7-4.9' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.tog input:focus-visible+span{outline:3px solid var(--orange);outline-offset:2px}
+.vbar{align-items:center}
+.vbar .seg{margin-left:0}
+.vstatus{color:var(--muted);font-size:14px}
+.keys{color:var(--muted);font-size:14px;margin:8px 0 0}
+.privacy{margin:14px 0 0;color:var(--muted);font-size:15px}
+.tips{margin-top:18px}
+.btn[disabled]{pointer-events:none}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" fill="#fff"/>
+      <g fill="none" stroke="#BF5700" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="38" cy="15" r="4.6" fill="#BF5700" stroke="none"/>
+        <path d="M35 22 L30 35 L38 42 L36 53"/>
+        <path d="M30 35 L21 40 L16 51"/>
+        <path d="M34 25 L44 30 L50 27"/>
+        <path d="M34 25 L26 31 L21 28"/>
+      </g>
+      <g fill="#BF5700"><circle cx="35" cy="22" r="2.4"/><circle cx="30" cy="35" r="2.4"/><circle cx="38" cy="42" r="2.4"/></g>
+    </svg>
+    <div>
+      <h1>RunningForm Analyzer/AI</h1>
+      <p>Drop in a side-view running video. Get your form, joint by joint, with a coach's plan.</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 1. upload -->
+  <section id="sUpload">
+    <label class="drop" id="drop" for="file">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="6" y="14" width="52" height="36" rx="6"/><path d="M26 25v14l12-7z" fill="currentColor"/><path d="M32 6v4M20 8l2 3M44 8l-2 3"/>
+      </svg>
+      <span class="big">Drag and drop your running video here</span>
+      <span class="small">or <span class="link">browse your files</span>. MP4 or MOV, filmed from the side with the whole body in frame, at least 5 seconds of running.</span>
+      <input id="file" type="file" accept="video/*,.mov,.mp4,.m4v,.avi,.mkv,.webm">
+    </label>
+    <p class="privacy"><strong>Your video stays on your device.</strong> The analysis runs in your browser, and nothing is uploaded.</p>
+
+    <div class="picked" id="picked" hidden>
+      <div><div class="fname" id="fname"></div><div class="fsize" id="fsize"></div></div>
+      <span class="spacer"></span>
+      <button type="button" class="textbtn" id="clearFile">Choose a different video</button>
+    </div>
+
+    <div class="opts" id="opts" hidden>
+      <div class="field"><label for="runner">Runner name (optional)</label><input id="runner" type="text" maxlength="60" placeholder="e.g. Fara"></div>
+      <div class="field"><label for="height">Height in cm (optional)</label><input id="height" type="number" min="100" max="230" placeholder="e.g. 180"><span class="hint">Lets us report distances in centimetres.</span></div>
+      <label class="check"><input type="checkbox" id="accurate" checked><span><strong>More accurate</strong><br><span style="color:var(--muted)">Slower, but tracks the body more precisely.</span></span></label>
+    </div>
+    <div class="go" id="go" hidden><button type="button" class="btn" id="analyze">Analyze video</button></div>
+    <div class="err" id="err" role="alert" hidden></div>
+
+    <ul class="tips">
+      <li>Put the camera beside the runner at hip height, on a tripod.</li>
+      <li>Keep the whole body in frame, with good light and fitted clothing.</li>
+      <li>Film at 60 fps if you can. It makes ground contact time much more reliable.</li>
+      <li>The first analysis downloads the pose model (about 10 to 30 MB), so give it a moment.</li>
+    </ul>
+  </section>
+
+  <!-- 2. progress -->
+  <section id="sProgress" class="progress" aria-live="polite" hidden>
+    <h2 id="pTitle">Analyzing your run</h2>
+    <p class="stage" id="pStage">Starting</p>
+    <div class="bar" id="pBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="pFill"></i></div>
+    <div class="pct" id="pPct">0%</div>
+    <p class="note">Keep this tab open and in front while it works. Longer videos take longer.</p>
+    <p><button type="button" class="textbtn" id="cancel">Cancel</button></p>
+  </section>
+
+  <!-- 3. results -->
+  <section id="sResults" hidden>
+    <div class="vcard"><canvas id="stage" role="img" aria-label="Your video with the skeleton, joint angles and landing markers drawn on the runner."></canvas></div>
+    <div class="vctl">
+      <button type="button" class="btn small" id="bPlay">Pause</button>
+      <button type="button" class="btn ghost small" id="bPrev">Previous frame</button>
+      <button type="button" class="btn ghost small" id="bNext">Next frame</button>
+      <input class="scrub" id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Position in the video">
+      <span class="counter" id="counter" aria-live="off"></span>
+    </div>
+    <div class="vbar">
+      <span class="seg" role="group" aria-label="Playback speed">
+        <label><input type="radio" name="spd" value="0.25"><span>0.25×</span></label>
+        <label><input type="radio" name="spd" value="0.5"><span>0.5×</span></label>
+        <label><input type="radio" name="spd" value="1" checked><span>1×</span></label>
+      </span>
+      <span class="togs" role="group" aria-label="What to show">
+        <label class="tog"><input type="checkbox" id="oBack" checked><span>Back leg</span></label>
+        <label class="tog"><input type="checkbox" id="oAng" checked><span>Joint angles</span></label>
+        <label class="tog"><input type="checkbox" id="oSkel" checked><span>Skeleton</span></label>
+      </span>
+      <span class="legend"><span><i style="background:#FF8F1F"></i><span id="lgMain">Main</span></span><span><i style="background:#78C8FF"></i><span id="lgBack">Back</span></span></span>
+    </div>
+    <p class="keys">Keyboard: left and right arrow keys step one frame, space plays or pauses.</p>
+
+    <article class="report" id="report" tabindex="-1" aria-label="Running form report"></article>
+
+    <div class="actions">
+      <button type="button" class="btn ghost" id="again">Upload a new video</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="saveVideo">Save video</button>
+      <button type="button" class="btn" id="saveReport">Save report</button>
+      <span class="sub"><span class="vstatus" id="vstatus" role="status" hidden></span> <button type="button" class="textbtn" id="stopExport" hidden>Cancel</button></span>
+      <span class="sub"><a id="csvLink" class="textbtn" href="#">Download the angle data for every frame (CSV)</a></span>
+    </div>
+  </section>
+
+  <p class="fine">Angles are estimates from a single camera, for coaching purposes. They aren't a medical assessment or an injury diagnosis. Target ranges are general guidelines.</p>
+</main>
+
+<video id="vid" class="hidden-video" muted playsinline preload="auto"></video>
+
+<script>
+/* RunningForm AI - analysis engine (JavaScript port of the Python analyzer.py).
+ * Works in the browser (global RFA) and in Node (module.exports) so it can be tested against the Python version. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.RFA = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+'use strict';
+
+const KEYS = ['shoulder', 'hip', 'knee', 'ankle', 'heel', 'toe'];
+// MediaPipe Pose landmark indices
+const SIDE_IDX = {
+  left:  { shoulder: 11, hip: 23, knee: 25, ankle: 27, heel: 29, toe: 31 },
+  right: { shoulder: 12, hip: 24, knee: 26, ankle: 28, heel: 30, toe: 32 }
+};
+const CSV_FIELDS = [
+  't', 'runner',
+  'main_side', 'main_ankle_deg', 'main_knee_deg', 'main_foot_deg', 'main_shank_deg', 'main_hip_flexion_deg',
+  'back_side', 'back_ankle_deg', 'back_knee_deg', 'back_foot_deg', 'back_shank_deg', 'back_hip_flexion_deg',
+  'trunk_lean_deg'
+];
+
+const deg = r => r * 180 / Math.PI;
+const isNum = v => typeof v === 'number' && isFinite(v);
+
+/* ---------------- geometry (image coordinates, y points DOWN; facing = +1 if the runner faces right) ---------------- */
+function angleAt(a, b, c) {
+  const v1 = [a[0] - b[0], a[1] - b[1]], v2 = [c[0] - b[0], c[1] - b[1]];
+  const d = Math.hypot(v1[0], v1[1]) * Math.hypot(v2[0], v2[1]);
+  if (d < 1e-9) return NaN;
+  return deg(Math.acos(Math.max(-1, Math.min(1, (v1[0] * v2[0] + v1[1] * v2[1]) / d))));
+}
+const footAngle = (heel, toe, f) => deg(Math.atan2(heel[1] - toe[1], (toe[0] - heel[0]) * f));
+const trunkLean = (sh, hip, f) => deg(Math.atan2((sh[0] - hip[0]) * f, hip[1] - sh[1]));
+const shankAngle = (knee, ankle, f) => deg(Math.atan2((ankle[0] - knee[0]) * f, ankle[1] - knee[1]));
+function hipFlexion(sh, hip, knee, f) {            // trunk (extended downward) to thigh; 0 standing, 90 knee level with hip
+  const d = [hip[0] - sh[0], hip[1] - sh[1]], v = [knee[0] - hip[0], knee[1] - hip[1]];
+  return -f * deg(Math.atan2(d[0] * v[1] - d[1] * v[0], d[0] * v[0] + d[1] * v[1]));
+}
+
+/* ---------------- small numeric helpers ---------------- */
+function median(arr) {
+  const v = arr.filter(isNum).sort((a, b) => a - b);
+  if (!v.length) return null;
+  const m = v.length >> 1;
+  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+}
+function percentile(arr, q) {                       // numpy "linear" method
+  const v = Array.from(arr).sort((a, b) => a - b);
+  const idx = (v.length - 1) * q / 100, lo = Math.floor(idx), hi = Math.ceil(idx);
+  return v[lo] + (v[hi] - v[lo]) * (idx - lo);
+}
+function fillNan(a) {                               // np.interp-style gap filling, per column, if >= 2 valid samples
+  const out = Float64Array.from(a);
+  const ok = [];
+  for (let i = 0; i < out.length; i++) if (isNum(out[i])) ok.push(i);
+  if (ok.length < 2) return out;
+  let k = 0;
+  for (let i = 0; i < out.length; i++) {
+    if (i <= ok[0]) { out[i] = a[ok[0]]; continue; }
+    if (i >= ok[ok.length - 1]) { out[i] = a[ok[ok.length - 1]]; continue; }
+    while (ok[k + 1] < i) k++;
+    if (ok[k] === i) { out[i] = a[i]; continue; }
+    const i0 = ok[k], i1 = ok[k + 1];
+    out[i] = a[i0] + (a[i1] - a[i0]) * (i - i0) / (i1 - i0);
+  }
+  return out;
+}
+
+/* ---------------- Savitzky-Golay (polyorder 2, scipy mode='interp') ---------------- */
+function solve3(A, b) {                             // Gaussian elimination, (order+1) square system
+  const n = b.length, M = A.map((r, i) => r.concat([b[i]]));
+  for (let c = 0; c < n; c++) {
+    let p = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    [M[c], M[p]] = [M[p], M[c]];
+    for (let r = c + 1; r < n; r++) { const f = M[r][c] / M[c][c]; for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k]; }
+  }
+  const x = new Array(n).fill(0);
+  for (let r = n - 1; r >= 0; r--) { let s = M[r][n]; for (let k = r + 1; k < n; k++) s -= M[r][k] * x[k]; x[r] = s / M[r][r]; }
+  return x;
+}
+function polyfit(xs, ys, order) {
+  const n = order + 1, A = Array.from({ length: n }, () => new Array(n).fill(0)), b = new Array(n).fill(0);
+  for (let i = 0; i < xs.length; i++) {
+    const pw = [1]; for (let k = 1; k < 2 * n; k++) pw.push(pw[k - 1] * xs[i]);
+    for (let r = 0; r < n; r++) { b[r] += pw[r] * ys[i]; for (let c = 0; c < n; c++) A[r][c] += pw[r + c]; }
+  }
+  return solve3(A, b);
+}
+const polyval = (co, x) => co.reduce((s, c, k) => s + c * Math.pow(x, k), 0);
+function savgol(y, w, order) {
+  const n = y.length, h = (w - 1) >> 1, out = new Float64Array(n);
+  const xs = Array.from({ length: w }, (_, i) => i - h);
+  // smoothing weights for the window centre: first row of pinv(A)
+  const m = order + 1, AtA = Array.from({ length: m }, () => new Array(m).fill(0));
+  for (const x of xs) for (let r = 0; r < m; r++) for (let c = 0; c < m; c++) AtA[r][c] += Math.pow(x, r + c);
+  const wts = xs.map(x => { const col = solve3(AtA, Array.from({ length: m }, (_, r) => Math.pow(x, r))); return col[0]; });
+  for (let i = h; i < n - h; i++) { let s = 0; for (let k = 0; k < w; k++) s += wts[k] * y[i - h + k]; out[i] = s; }
+  const first = polyfit(xs, Array.from(y.slice(0, w)), order), last = polyfit(xs, Array.from(y.slice(n - w)), order);
+  for (let i = 0; i < h; i++) { out[i] = polyval(first, i - h); out[n - 1 - i] = polyval(last, h - i); }
+  return out;
+}
+
+/* ---------------- scipy.signal.find_peaks (distance + prominence, same order of operations) ---------------- */
+function findPeaks(x, distance, prominence) {
+  const n = x.length; let peaks = [];
+  let i = 1; const imax = n - 1;
+  while (i < imax) {
+    if (x[i - 1] < x[i]) {
+      let ahead = i + 1;
+      while (ahead < imax && x[ahead] === x[i]) ahead++;
+      if (x[ahead] < x[i]) { peaks.push(Math.floor((i + ahead - 1) / 2)); i = ahead; }
+    }
+    i++;
+  }
+  if (distance != null && peaks.length) {           // keep taller peaks, drop neighbours closer than `distance`
+    const d = Math.ceil(distance), keep = new Array(peaks.length).fill(true);
+    const order = peaks.map((p, k) => k).sort((a, b) => x[peaks[a]] - x[peaks[b]]);
+    for (let q = peaks.length - 1; q >= 0; q--) {
+      const j = order[q]; if (!keep[j]) continue;
+      for (let k = j - 1; k >= 0 && peaks[j] - peaks[k] < d; k--) keep[k] = false;
+      for (let k = j + 1; k < peaks.length && peaks[k] - peaks[j] < d; k++) keep[k] = false;
+    }
+    peaks = peaks.filter((p, k) => keep[k]);
+  }
+  if (prominence != null) {
+    peaks = peaks.filter(p => {
+      let lmin = x[p], rmin = x[p], k = p;
+      while (k >= 0 && x[k] <= x[p]) { if (x[k] < lmin) lmin = x[k]; k--; }
+      k = p;
+      while (k <= n - 1 && x[k] <= x[p]) { if (x[k] < rmin) rmin = x[k]; k++; }
+      return x[p] - Math.max(lmin, rmin) >= prominence;
+    });
+  }
+  return peaks;
+}
+
+/* ---------------- stride analysis ---------------- */
+const pt = (Q, key, i) => [Q[key].x[i], Q[key].y[i]];
+const allFinite = Q => KEYS.every(k => Q[k].x.every(isNum) && Q[k].y.every(isNum));
+
+function analyzeStrides(t, P, fps, heightCm) {
+  if (t.length < fps * 2) return null;
+  const sides = Object.keys(P).filter(s => allFinite(P[s]));
+  if (!sides.length) return null;
+  const dxs = [];
+  for (const s of sides) for (let i = 0; i < t.length; i++) dxs.push(P[s].toe.x[i] - P[s].heel.x[i]);
+  const facing = (median(dxs) >= 0) ? 1 : -1;
+  const lens = [];
+  for (const s of sides) for (let i = 0; i < t.length; i++) {
+    const Q = P[s];
+    lens.push(Math.hypot(Q.hip.x[i] - Q.knee.x[i], Q.hip.y[i] - Q.knee.y[i]) + Math.hypot(Q.knee.x[i] - Q.ankle.x[i], Q.knee.y[i] - Q.ankle.y[i]));
+  }
+  const legPx = median(lens);
+  if (!isNum(legPx) || legPx < 1) return null;
+
+  const events = [], offs = [];
+  for (const side of sides) {
+    const Q = P[side];
+    let s = new Float64Array(t.length);
+    for (let i = 0; i < t.length; i++) s[i] = (Q.ankle.x[i] - Q.hip.x[i]) * facing;
+    const w = Math.max(5, Math.floor(Math.floor(fps * 0.12) / 2) * 2 + 1);
+    if (s.length > w) s = savgol(s, w, 2);
+    const swing = percentile(s, 95) - percentile(s, 5);
+    const dist = Math.max(2, Math.floor(fps * 0.28)), prom = Math.max(0.06 * legPx, 0.3 * swing);
+    const strikes = findPeaks(s, dist, prom);
+    const ns = Float64Array.from(s, v => -v);
+    const toeoffs = findPeaks(ns, dist, prom);
+    for (const i of strikes) {
+      const later = toeoffs.find(j => j > i);
+      const contact = (later !== undefined && t[later] - t[i] < 0.6) ? t[later] - t[i] : null;
+      events.push({
+        i, t: t[i], side, over_px: s[i], contact,
+        ankle: angleAt(pt(Q, 'knee', i), pt(Q, 'ankle', i), pt(Q, 'toe', i)),
+        foot: footAngle(pt(Q, 'heel', i), pt(Q, 'toe', i), facing),
+        knee: angleAt(pt(Q, 'hip', i), pt(Q, 'knee', i), pt(Q, 'ankle', i)),
+        shank: shankAngle(pt(Q, 'knee', i), pt(Q, 'ankle', i), facing),
+        hip: hipFlexion(pt(Q, 'shoulder', i), pt(Q, 'hip', i), pt(Q, 'knee', i), facing),
+        lean: trunkLean(pt(Q, 'shoulder', i), pt(Q, 'hip', i), facing)
+      });
+    }
+    for (const j of toeoffs) {
+      offs.push({
+        side,
+        ankle: angleAt(pt(Q, 'knee', j), pt(Q, 'ankle', j), pt(Q, 'toe', j)),
+        foot: footAngle(pt(Q, 'heel', j), pt(Q, 'toe', j), facing),
+        knee: angleAt(pt(Q, 'hip', j), pt(Q, 'knee', j), pt(Q, 'ankle', j)),
+        hip: hipFlexion(pt(Q, 'shoulder', j), pt(Q, 'hip', j), pt(Q, 'knee', j), facing)
+      });
+    }
+  }
+  events.sort((a, b) => a.t - b.t);
+  if (events.length < 3) return null;
+
+  const span = events[events.length - 1].t - events[0].t;
+  const overPx = median(events.map(e => e.over_px));
+  const cmPerPx = heightCm ? (0.53 * heightCm) / legPx : null;
+  const med = (rows, k) => median(rows.map(r => r[k]));
+
+  // peak hip flexion per stride = how high the knee comes up (90 = knee level with the hip)
+  const flexAll = [], flexSide = {};
+  for (const s of sides) {
+    const Q = P[s], n = t.length;
+    let series = new Float64Array(n);
+    for (let i = 0; i < n; i++) series[i] = hipFlexion([Q.shoulder.x[i], Q.shoulder.y[i]], [Q.hip.x[i], Q.hip.y[i]], [Q.knee.x[i], Q.knee.y[i]], facing);
+    const w2 = Math.max(5, Math.floor(Math.floor(fps * 0.1) / 2) * 2 + 1);
+    if (series.length > w2) series = savgol(series, w2, 2);
+    const idx = events.filter(e => e.side === s).map(e => e.i), peaks = [];
+    for (let k = 0; k + 1 < idx.length; k++) {
+      const a = idx[k], b = idx[k + 1];
+      if (b - a >= 2) { let m = -Infinity; for (let q = a; q <= b; q++) if (series[q] > m) m = series[q]; peaks.push(m); }
+    }
+    flexSide[s] = median(peaks); peaks.forEach(p => flexAll.push(p));
+  }
+
+  const by_side = {};
+  for (const s of sides) {
+    const ev = events.filter(e => e.side === s), of = offs.filter(o => o.side === s);
+    if (ev.length >= 2) by_side[s] = {
+      n: ev.length, hip_flex: flexSide[s] === undefined ? null : flexSide[s],
+      landing: { ankle: med(ev, 'ankle'), knee: med(ev, 'knee'), hip: med(ev, 'hip'), shank: med(ev, 'shank'), foot: med(ev, 'foot') },
+      pushoff: of.length >= 2 ? { ankle: med(of, 'ankle'), knee: med(of, 'knee'), hip: med(of, 'hip'), foot: med(of, 'foot') } : null
+    };
+  }
+  const contact = med(events, 'contact');
+  return {
+    facing, steps: events.length, events, by_side, hip_flex: median(flexAll),
+    cadence: span > 0 ? (events.length - 1) / span * 60 * (2 / sides.length) : null,
+    contact_ms: contact !== null ? contact * 1000 : null,
+    over_pct: overPx / legPx * 100, over_cm: cmPerPx ? overPx * cmPerPx : null,
+    lean: med(events, 'lean'),
+    landing: { ankle: med(events, 'ankle'), knee: med(events, 'knee'), hip: med(events, 'hip'), shank: med(events, 'shank'), foot: med(events, 'foot'), lean: med(events, 'lean') }
+  };
+}
+
+/* ---------------- report: measures, status, coach notes ---------------- */
+function judge(v, band, axis) {
+  const lo = band[0], hi = band[1];
+  const dist = v < lo ? lo - v : v > hi ? v - hi : 0;
+  const tol = (axis[1] - axis[0]) * 0.12;
+  return { status: dist === 0 ? 'ok' : dist <= tol ? 'watch' : 'off', sev: dist / tol, dir: v < lo ? 'low' : v > hi ? 'high' : 'in' };
+}
+const pyRound = v => { const f = Math.floor(v), d = v - f; return d < 0.5 ? f : d > 0.5 ? f + 1 : (f % 2 === 0 ? f : f + 1); };   // Python's round-half-even
+
+function buildReport(A, fps, heightCm, trackedPct, near, far) {
+  const L = A.landing, cm = A.over_cm !== null && A.over_cm !== undefined;
+  const defs = [
+    ['cad', 'Cadence', A.cadence, 'steps/min', [168, 182], [140, 200]],
+    ['gct', 'Ground contact', A.contact_ms, 'ms', [200, 260], [160, 320]],
+    ['over', 'Foot lands ahead of hips', cm ? A.over_cm : A.over_pct, cm ? 'cm' : '% of leg', cm ? [-5, 15] : [-6, 16], cm ? [-20, 40] : [-25, 50]],
+    ['lean', 'Trunk lean', A.lean, 'deg', [4, 10], [-2, 16]],
+    ['flex', 'Hip flexion (knee lift)', A.hip_flex, 'deg', [30, 75], [10, 100]],
+    ['foot', 'Foot angle at landing', L.foot, 'deg', [-4, 14], [-10, 30]],
+    ['shank', 'Shin (shank) angle at landing', L.shank, 'deg', [-10, 10], [-25, 25]]
+  ];
+  const measures = [];
+  for (const [id, label, v, unit, band, axis] of defs) {
+    if (v === null || v === undefined || !isNum(v)) continue;
+    const j = judge(v, band, axis);
+    let status = j.status, reason = null;
+    if (id === 'gct' && fps < 50) { status = 'na'; reason = 'Needs 60 fps or higher'; }
+    measures.push({ id, label, value: id === 'lean' ? Math.round(v * 10) / 10 : pyRound(v), unit, target: band[0] + ' to ' + band[1], status, sev: j.sev, dir: j.dir, reason });
+  }
+  const M = {}; measures.forEach(m => { M[m.id] = m; });
+  const n = k => pyRound(L[k]);
+  const val = id => (M[id] ? (id === 'lean' ? M[id].value.toFixed(1) : M[id].value) : null);   // lean shows one decimal, like the Python version
+  const overTxt = () => {
+    const v = M.over.value, side = v >= 0 ? 'ahead of' : 'behind';
+    return cm ? Math.abs(v).toFixed(0) + ' cm ' + side + ' your hips' : Math.abs(v).toFixed(0) + '% of your leg length ' + side + ' your hips';
+  };
+  const shankHi = !!M.shank && M.shank.dir === 'high';
+  const T = {
+    'cad|low': () => ['Your steps are on the slow side.', 'Cadence is ' + val('cad') + ' steps per minute.',
+      'Slower turnover usually means the foot lands further out in front of you, which acts like a brake.',
+      'Quicken your cadence. Run the first five minutes of easy runs to a metronome at about 172 beats per minute.'],
+    'cad|high': () => ['Your cadence is on the high side.', 'Cadence is ' + val('cad') + ' steps per minute.',
+      "Very quick steps can turn into short, choppy strides if the effort doesn't match.",
+      'Check that the pace feels easy. Around 172 to 176 often feels smoother.'],
+    'gct|high': () => ['You spend a long time on the ground.', 'Contact time is ' + val('gct') + ' ms per step.',
+      'Longer contact usually means less spring from the calf and more time braking.',
+      'After easy runs, do four relaxed 20-second strides and aim for light, quick contacts.'],
+    'over|high': () => ['Your foot lands well ahead of your hips (overstriding).',
+      M.over ? 'The foot lands ' + overTxt() + (shankHi ? ', and your shin angles forward ' + n('shank') + ' degrees at landing.' : '.') : '',
+      'Landing out in front sends more impact through the knee and shin and slows each step.',
+      'Aim to land under your body, with your foot close to directly beneath your hips. Think quick feet under your hips, and raise cadence by about 5% before changing anything else.'],
+    'over|low': () => ['Your foot is landing behind your hips.', M.over ? 'The foot lands ' + overTxt() + '.' : '',
+      'Landing behind your body is unusual. It can come from a very quick, pawing step, or from the camera angle.',
+      'Aim to land under your body: let the foot come down directly beneath your hips, not behind them. Check the overlay video to make sure the landings are being picked at the right moment.'],
+    'shank|high': () => ['Your shin angles forward at landing.', 'Shin angle is ' + val('shank') + ' degrees at landing (0 is vertical).',
+      'A forward-leaning shin means the foot is reaching out ahead of the knee, a sign of overstriding.',
+      'Think about landing with the shin close to vertical, foot under the knee.'],
+    'foot|high': () => ['Your toes are up high at landing.', 'The foot is tilted ' + n('foot') + ' degrees toe-up at contact.',
+      "Heel strikes aren't wrong on their own. The concern is a high toe angle combined with landing far in front.",
+      "Let the foot land softer and flatter under your hips. Don't force a forefoot landing."],
+    'foot|low': () => ['You are landing on your toes.', 'The foot is pointed ' + Math.abs(n('foot')) + ' degrees toe-down at contact.',
+      'Forefoot landings load the calf and Achilles more.', 'Let the heel touch down gently after the ball of the foot.'],
+    'flex|low': () => ["Your knee isn't coming up much.", 'Your hip flexes ' + val('flex') + ' degrees at the top of each step (90 is the knee level with the hip).',
+      'A low knee drive shortens your stride and can leave the foot swinging out in front of you. It also rises with speed, so a slow jog or running in place reads lower.',
+      'Drive the knee up and forward, then let the foot drop under your hips. Add two sets of A-skips or high-knee drills before runs.'],
+    'lean|low': () => ['You are running tall and upright.', 'Trunk lean is ' + val('lean') + ' degrees.',
+      'A small forward lean from the ankles lets you fall into each step instead of reaching for it.',
+      'Lean forward slightly. Imagine a string pulling your chest forward, and lean from the ankles, not by bending at the waist.'],
+    'lean|high': () => ['You are leaning a lot.', 'Trunk lean is ' + val('lean') + ' degrees.',
+      'Too much lean can overload the hips and lower back.',
+      'Stand up taller. Run tall, as if a string pulls the top of your head upward.']
+  };
+  const hasOver = !!M.over && (M.over.status === 'watch' || M.over.status === 'off') && M.over.dir === 'high';
+  const issues = measures.filter(m => (m.status === 'watch' || m.status === 'off') && T[m.id + '|' + m.dir] && !(m.id === 'shank' && hasOver))
+    .sort((a, b) => b.sev - a.sev);
+  const notes = issues.slice(0, 3).map(m => {
+    const x = T[m.id + '|' + m.dir]();
+    return { id: m.id, level: m.status, title: x[0], saw: x[1], why: x[2], tip: x[3] };
+  });
+  if (M.over && (M.over.status === 'watch' || M.over.status === 'off'))
+    notes.forEach(nn => { if (nn.id === 'cad') nn.tip += ' Also aim to land under your body, with your foot close to directly beneath your hips.'; });
+
+  const FOCUS = {
+    'cad|low': 'quicker, shorter steps', 'cad|high': 'easing your step rate', 'gct|high': 'lighter, quicker contacts',
+    'over|high': 'landing under your body, closer to your hips', 'over|low': 'landing under your body, not behind it',
+    'shank|high': 'landing with a more vertical shin', 'foot|high': 'a softer, flatter landing', 'foot|low': 'letting the heel touch down',
+    'lean|low': 'leaning forward slightly from the ankles', 'lean|high': 'standing up taller', 'flex|low': 'driving the knee up (more hip flexion)'
+  };
+  const focus = issues.length ? 'Main focus: ' + FOCUS[issues[0].id + '|' + issues[0].dir] + '.' : 'Nothing stands out. Your measurements are inside the target ranges.';
+  const GOOD = {
+    cad: 'Your cadence is in a good range.', gct: 'Your ground contact time is in a good range.', over: 'Your foot lands close to your hips.',
+    lean: 'Your trunk lean is in a good range.', foot: 'Your foot angle at landing looks good.', shank: 'Your shin is close to vertical at landing.',
+    flex: 'Your knee lift (hip flexion) is in a good range.'
+  };
+  const strengths = measures.filter(m => m.status === 'ok').map(m => GOOD[m.id]);
+
+  const warnings = [];
+  const tp = s => (trackedPct[s] === undefined ? 100 : trackedPct[s]);
+  if (fps < 50) warnings.push('This video was analyzed at ' + fps.toFixed(0) + ' frames per second. Ground contact time needs 60 or higher, so treat it as a rough estimate.');
+  if (A.steps < 12) warnings.push('Only ' + A.steps + ' steps were detected, so numbers can swing a lot. Clips of 10+ seconds give steadier results.');
+  if (tp(near) < 70) warnings.push('The main leg was tracked in only ' + tp(near).toFixed(0) + '% of frames. Check the lighting and that the whole body is in view.');
+  if (tp(far) < 50) warnings.push('The back leg was tracked in only ' + tp(far).toFixed(0) + '% of frames (it is partly hidden behind the main leg), so its numbers are less reliable.');
+  if (L.foot !== null && Math.abs(L.foot) > 60) warnings.push('Foot angles look unusual. The camera should be directly beside the runner (a true side view) for these angles to make sense.');
+  if (A.over_pct < -15) warnings.push('The foot appears to land behind the hip line, which is unusual. Watch the overlay video to check that landings are being picked at the right moment.');
+
+  const bs = A.by_side;
+  const legs = { main: bs[near] ? Object.assign({ side: near }, bs[near]) : null, back: bs[far] ? Object.assign({ side: far }, bs[far]) : null };
+  return { measures, notes, focus, strengths, warnings, legs, landing: A.landing, steps: A.steps, cadence: A.cadence };
+}
+
+/* ---------------- per-frame angles (used by the overlay and the CSV) ---------------- */
+function frameAngles(p, facing) {
+  return {
+    ankle: angleAt([p.knee[0], p.knee[1]], [p.ankle[0], p.ankle[1]], [p.toe[0], p.toe[1]]),
+    knee: angleAt(p.hip, p.knee, p.ankle),
+    foot: footAngle(p.heel, p.toe, facing),
+    shank: shankAngle(p.knee, p.ankle, facing),
+    hip: hipFlexion(p.shoulder, p.hip, p.knee, facing),
+    lean: trunkLean(p.shoulder, p.hip, facing)
+  };
+}
+
+/* ---------------- everything after tracking: landmarks -> report + CSV rows ----------------
+ * lms: array (one per frame) of null or an array of 33 landmarks [x_px, y_px, visibility]                     */
+function analyzeAll(opts) {
+  const { lms, fps, runner = '', heightCm = null, minVis = 0.3 } = opts;
+  const n = lms.length;
+  if (n < fps * 2) throw new Error('That video is too short. Use a clip of at least 5 seconds of running.');
+  const pts = [], visSum = { left: 0, right: 0 }, tracked = { left: 0, right: 0 };
+  const cols = { left: {}, right: {} };
+  for (const s of ['left', 'right']) for (const k of KEYS) cols[s][k] = { x: new Float64Array(n).fill(NaN), y: new Float64Array(n).fill(NaN) };
+  const t = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    t[i] = i / fps;
+    const lm = lms[i], p = { left: null, right: null };
+    if (lm) for (const s of ['left', 'right']) {
+      const idx = SIDE_IDX[s];
+      const v = Math.min(...KEYS.map(k => lm[idx[k]][2]));
+      visSum[s] += v;
+      if (v >= minVis) {
+        p[s] = {}; tracked[s]++;
+        for (const k of KEYS) { p[s][k] = [lm[idx[k]][0], lm[idx[k]][1]]; cols[s][k].x[i] = lm[idx[k]][0]; cols[s][k].y[i] = lm[idx[k]][1]; }
+      }
+    }
+    pts.push(p);
+  }
+  const P = {};
+  for (const s of ['left', 'right']) { P[s] = {}; for (const k of KEYS) P[s][k] = { x: fillNan(cols[s][k].x), y: fillNan(cols[s][k].y) }; }
+  const A = analyzeStrides(t, P, fps, heightCm);
+  if (!A) throw new Error("Couldn't detect enough running steps. Use a side-on video with the whole runner in frame and at least 5 seconds of running.");
+  const nearFinal = visSum.left >= visSum.right ? 'left' : 'right';      // same tie-break as Python's max() (first key wins ties)
+  const far = nearFinal === 'right' ? 'left' : 'right';
+  const trackedPct = { left: tracked.left / n * 100, right: tracked.right / n * 100 };
+  const report = buildReport(A, fps, heightCm, trackedPct, nearFinal, far);
+
+  // per-frame rows for the CSV
+  const rows = [];
+  for (let i = 0; i < n; i++) {
+    const row = {}; CSV_FIELDS.forEach(f => { row[f] = ''; });
+    row.t = +(i / fps).toFixed(4); row.runner = runner || ''; row.main_side = nearFinal; row.back_side = far;
+    let lean = null;
+    for (const [s, who] of [[far, 'back'], [nearFinal, 'main']]) {
+      const p = pts[i][s]; if (!p) continue;
+      const a = frameAngles(p, A.facing);
+      row[who + '_ankle_deg'] = +a.ankle.toFixed(1); row[who + '_knee_deg'] = +a.knee.toFixed(1); row[who + '_foot_deg'] = +a.foot.toFixed(1);
+      row[who + '_shank_deg'] = +a.shank.toFixed(1); row[who + '_hip_flexion_deg'] = +a.hip.toFixed(1);
+      if (who === 'main' || lean === null) lean = a.lean;
+    }
+    if (lean !== null) { row.trunk_lean_deg = +lean.toFixed(1); rows.push(row); }
+  }
+  const duration = n / fps;
+  const result = Object.assign({
+    runner, fps, duration_s: duration, frames: n, height_cm: heightCm, near_side: nearFinal, far_side: far,
+    tracked_pct: trackedPct, video_ok: true
+  }, report);
+  return { result, rows, events: A.events, near: nearFinal, far, facing: A.facing, pts, hipFlex: A.hip_flex };
+}
+
+function rowsToCsv(rows) {
+  const esc = v => { const s = String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  return [CSV_FIELDS.join(',')].concat(rows.map(r => CSV_FIELDS.map(f => esc(r[f])).join(','))).join('\r\n') + '\r\n';
+}
+
+return { KEYS, SIDE_IDX, CSV_FIELDS, angleAt, footAngle, trunkLean, shankAngle, hipFlexion, savgol, findPeaks, fillNan, percentile, median,
+         analyzeStrides, buildReport, frameAngles, analyzeAll, rowsToCsv };
+});
+
+</script>
+<script>
+(function () {
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = (v, d = 0) => v == null ? '—' : (+v).toFixed(d).replace('-', '−');
+const LABEL = { ok: '✓ In range', watch: '▲ Watch', off: '✕ Off target', na: '– Rough estimate' };
+
+/* ---------- settings you may want to change ---------- */
+const MP_VERSIONS = ['0.10.21', '0.10.18', '0.10.14'];       // pose library versions to try, in order; then the newest
+const MODEL_URL = {
+  full:  'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task',
+  heavy: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task'
+};
+const MAX_DIM = 1280;          // longest side of the analyzed/overlay frame
+const MAX_SECONDS = 90;        // only the first 90 seconds of a clip are analyzed
+
+const C_MAIN = '#FF8F1F', C_BACK = '#78C8FF', C_ACCENT = '#BF5700';
+const CONN = [[11, 12], [11, 13], [13, 15], [15, 17], [15, 19], [15, 21], [17, 19], [12, 14], [14, 16], [16, 18], [16, 20], [16, 22], [18, 20],
+  [11, 23], [12, 24], [23, 24], [23, 25], [24, 26], [25, 27], [26, 28], [27, 29], [28, 30], [29, 31], [30, 32], [27, 31], [28, 32]];
+
+const state = { file: null, url: null, cancel: false, out: null, lms: null, fps: 30, N: 0, W: 0, H: 0, flash: 8,
+  opts: { back: true, angles: true, skeleton: true }, live: false, redraw: true, lastDrawn: -1, exporting: false, stopExport: false };
+const vid = $('vid'), cv = $('stage'), ctx = cv.getContext('2d');
+
+/* ---------- steps ---------- */
+function show(which) {
+  ['sUpload', 'sProgress', 'sResults'].forEach(id => { $(id).hidden = id !== which; });
+  window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+/* ---------- picking a file ---------- */
+const VIDEO_RE = /\.(mp4|mov|m4v|avi|mkv|webm)$/i;
+function setError(msg) { $('err').textContent = msg || ''; $('err').hidden = !msg; }
+function pickFile(f) {
+  setError('');
+  if (!f) return;
+  if (!(f.type.startsWith('video/') || VIDEO_RE.test(f.name))) { setError("That file doesn't look like a video. Try an MP4 or MOV."); return; }
+  state.file = f;
+  $('fname').textContent = f.name;
+  $('fsize').textContent = f.size / 1048576 >= 1 ? (f.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(f.size / 1024)) + ' KB';
+  $('picked').hidden = $('opts').hidden = $('go').hidden = false;
+  $('drop').hidden = true;
+}
+function clearFile() {
+  state.file = null; $('file').value = '';
+  $('picked').hidden = $('opts').hidden = $('go').hidden = true;
+  $('drop').hidden = false; setError('');
+}
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', ev => pickFile(ev.dataTransfer.files[0]));
+['dragover', 'drop'].forEach(e => window.addEventListener(e, ev => ev.preventDefault()));
+$('file').addEventListener('change', ev => pickFile(ev.target.files[0]));
+$('clearFile').addEventListener('click', clearFile);
+
+/* ---------- progress ---------- */
+function setProgress(frac, stage, title) {
+  const bar = $('pBar'), indet = frac == null;
+  bar.classList.toggle('indet', indet);
+  if (!indet) {
+    const p = Math.round(Math.max(0, Math.min(1, frac)) * 100);
+    $('pFill').style.width = p + '%'; $('pPct').textContent = p + '%'; bar.setAttribute('aria-valuenow', p);
+  } else $('pPct').textContent = '';
+  if (stage) $('pStage').textContent = stage;
+  if (title) $('pTitle').textContent = title;
+}
+$('cancel').addEventListener('click', () => { state.cancel = true; });
+
+/* ---------- video helpers ---------- */
+function waitFor(el, evt, ms, msg) {
+  return new Promise((res, rej) => {
+    const ok = () => { clean(); res(); }, bad = () => { clean(); rej(new Error(msg)); };
+    const to = setTimeout(bad, ms);
+    function clean() { clearTimeout(to); el.removeEventListener(evt, ok); el.removeEventListener('error', bad); }
+    el.addEventListener(evt, ok); el.addEventListener('error', bad);
+  });
+}
+function seekTo(v, t) {
+  return new Promise(res => {
+    if (Math.abs(v.currentTime - t) < 1e-4 && v.readyState >= 2) return res();
+    let done = false;
+    const fin = () => { if (done) return; done = true; v.removeEventListener('seeked', fin); clearTimeout(to); res(); };
+    const to = setTimeout(fin, 4000);
+    v.addEventListener('seeked', fin);
+    v.currentTime = t;
+  });
+}
+function estimateFps(v) {                      // browsers don't expose the frame rate, so measure it
+  if (!('requestVideoFrameCallback' in v)) return Promise.resolve(30);
+  return new Promise(resolve => {
+    const times = []; let done = false;
+    const finish = () => {
+      if (done) return; done = true; v.pause();
+      const d = []; for (let i = 1; i < times.length; i++) { const dt = times[i] - times[i - 1]; if (dt > 0) d.push(dt); }
+      d.sort((a, b) => a - b);
+      resolve(d.length ? Math.round(1 / d[d.length >> 1]) : 30);
+    };
+    const cb = (now, meta) => { times.push(meta.mediaTime); if (times.length >= 14) finish(); else v.requestVideoFrameCallback(cb); };
+    v.requestVideoFrameCallback(cb);
+    v.play().catch(finish);
+    setTimeout(finish, 2000);
+  });
+}
+
+/* ---------- pose model ---------- */
+async function loadLandmarker(accurate) {
+  if (window.__MOCK_POSE__) return { detect: (video, tms) => ({ landmarks: [window.__MOCK_POSE__(video.currentTime)] }), close() {} };
+  let lastErr;
+  for (const v of MP_VERSIONS.map(x => '@' + x).concat([''])) {
+    try {
+      const base = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision' + v;
+      const mod = await import(base + '/vision_bundle.mjs');
+      const fileset = await mod.FilesetResolver.forVisionTasks(base + '/wasm');
+      for (const delegate of ['GPU', 'CPU']) {
+        try {
+          const lm = await mod.PoseLandmarker.createFromOptions(fileset, {
+            baseOptions: { modelAssetPath: accurate ? MODEL_URL.heavy : MODEL_URL.full, delegate },
+            runningMode: 'VIDEO', numPoses: 1, minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5
+          });
+          return { detect: (video, tms) => lm.detectForVideo(video, tms), close() { try { lm.close(); } catch (e) {} } };
+        } catch (e) { lastErr = e; }
+      }
+    } catch (e) { lastErr = e; }
+  }
+  console.error(lastErr);
+  throw new Error("Couldn't load the pose model. Check your internet connection and try again.");
+}
+
+/* ---------- the analysis run ---------- */
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+async function runAnalysis() {
+  setError(''); state.cancel = false;
+  const name = $('runner').value.trim(), h = parseFloat($('height').value), heightCm = h >= 100 && h <= 230 ? h : null;
+  show('sProgress');
+  setProgress(0, 'Opening the video', 'Analyzing ' + state.file.name);
+  let lmk = null;
+  try {
+    if (state.url) URL.revokeObjectURL(state.url);
+    state.url = URL.createObjectURL(state.file);
+    vid.loop = false; vid.muted = true; vid.playsInline = true; vid.src = state.url;
+    await waitFor(vid, 'loadeddata', 20000, "Your browser can't open this video. Try an MP4 (H.264) file, or use Safari for iPhone videos.");
+    if (!isFinite(vid.duration) || vid.duration < 2) throw new Error('That video is too short. Use a clip of at least 5 seconds of running.');
+    setProgress(0.02, 'Checking the frame rate');
+    const fps = Math.max(24, Math.min(60, await estimateFps(vid)));
+    const duration = Math.min(vid.duration, MAX_SECONDS);
+    const sc = Math.min(1, MAX_DIM / Math.max(vid.videoWidth, vid.videoHeight));
+    const W = Math.round(vid.videoWidth * sc), H = Math.round(vid.videoHeight * sc);
+    setProgress(0.04, 'Loading the pose model (the first time takes a moment)');
+    lmk = await loadLandmarker($('accurate').checked);
+
+    const n = Math.floor(duration * fps), lms = new Array(n).fill(null), t0 = performance.now();
+    let lastTs = -1;
+    vid.pause();
+    for (let i = 0; i < n; i++) {
+      if (state.cancel) throw new Error('__cancel__');
+      const t = (i + 0.5) / fps;
+      await seekTo(vid, t);
+      let ts = Math.round(t * 1000); if (ts <= lastTs) ts = lastTs + 1; lastTs = ts;
+      const res = lmk.detect(vid, ts), L = res && res.landmarks && res.landmarks[0];
+      if (L && L.length >= 33) lms[i] = L.map(p => [p.x * W, p.y * H, p.visibility == null ? 1 : p.visibility]);
+      if (i % 4 === 0 || i === n - 1) {
+        const done = (i + 1) / n, el = (performance.now() - t0) / 1000, left = i > 8 ? el / done * (1 - done) : null;
+        setProgress(0.06 + done * 0.88, 'Tracking the runner: frame ' + (i + 1) + ' of ' + n + (left != null ? ' (about ' + (left < 90 ? Math.max(1, Math.round(left)) + ' seconds' : Math.round(left / 60) + ' minutes') + ' left)' : ''));
+      }
+    }
+    lmk.close(); lmk = null;
+    setProgress(0.96, 'Measuring strides');
+    await nextFrame();
+    const out = RFA.analyzeAll({ lms, fps, runner: name, heightCm });
+    if (duration < vid.duration) out.result.warnings.push('Only the first ' + MAX_SECONDS + ' seconds of this video were analyzed.');
+    setProgress(1, 'Done');
+    showResults(out, lms, { W, H, fps, n });
+  } catch (e) {
+    if (lmk) lmk.close();
+    state.live = false;
+    if (e.message === '__cancel__') { show('sUpload'); return; }
+    console.error(e);
+    show('sUpload'); setError(e.message || 'Something went wrong while analyzing the video.');
+  }
+}
+$('analyze').addEventListener('click', runAnalysis);
+
+/* ---------- drawing the overlay ---------- */
+function outlineText(c, s, x, y, color, size, align) {
+  c.font = '600 ' + size + 'px Barlow, system-ui, sans-serif'; c.textAlign = align || 'left'; c.lineJoin = 'round';
+  c.lineWidth = Math.max(3, size / 4); c.strokeStyle = 'rgba(0,0,0,0.85)'; c.strokeText(s, x, y); c.fillStyle = color; c.fillText(s, x, y);
+}
+function arcAt(c, a, b, cc, r, color, u) {
+  const a1 = Math.atan2(a[1] - b[1], a[0] - b[0]), a2 = Math.atan2(cc[1] - b[1], cc[0] - b[0]);
+  let d = a2 - a1; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+  c.beginPath(); c.arc(b[0], b[1], r, a1, a1 + d, d < 0); c.strokeStyle = color; c.lineWidth = Math.max(2, 2 * u); c.lineCap = 'round'; c.stroke();
+}
+function seg(c, p, q, color, w) { c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); c.strokeStyle = color; c.lineWidth = w; c.lineCap = 'round'; c.stroke(); }
+
+function drawFrame(c, i) {
+  const { W, H, out } = state, u = W / 960, fs = Math.max(13, Math.round(16 * u));
+  c.drawImage(vid, 0, 0, W, H);
+  const lm = state.lms[i], pts = out.pts[i];
+  if (state.opts.skeleton && lm) {
+    for (const [a, b] of CONN) if (lm[a][2] > 0.3 && lm[b][2] > 0.3) seg(c, lm[a], lm[b], 'rgba(235,235,235,0.9)', Math.max(1.5, 2 * u));
+    c.fillStyle = 'rgba(235,235,235,0.95)';
+    for (let k = 0; k < lm.length; k++) if (lm[k][2] > 0.3 && (k === 0 || k >= 11)) { c.beginPath(); c.arc(lm[k][0], lm[k][1], Math.max(2, 3 * u), 0, 6.2832); c.fill(); }
+  }
+  const sides = [[out.far, 'back', C_BACK], [out.near, 'main', C_MAIN]];
+  for (const [s, who, color] of sides) {
+    if (who === 'back' && !state.opts.back) continue;
+    const p = pts[s]; if (!p) continue;
+    const bk = who === 'back', a = RFA.frameAngles(p, out.facing);
+    for (const [x, y] of [['hip', 'knee'], ['knee', 'ankle'], ['ankle', 'heel'], ['heel', 'toe'], ['toe', 'ankle']]) seg(c, p[x], p[y], color, (bk ? 3 : 4) * u);
+    if (state.opts.angles) {
+      const lab = (txt, pos, r) => outlineText(c, (bk ? 'Back ' : '') + txt, bk ? pos[0] - r - 6 * u : pos[0] + r + 6 * u, pos[1] + 5 * u, bk ? color : (txt.startsWith('knee') || txt.startsWith('hip') ? '#FFFFFF' : color), fs, bk ? 'right' : 'left');
+      const below = [2 * p.hip[0] - p.shoulder[0], 2 * p.hip[1] - p.shoulder[1]];
+      arcAt(c, p.knee, p.ankle, p.toe, 26 * u, color, u); lab('ankle ' + Math.round(a.ankle), p.ankle, 26 * u);
+      arcAt(c, p.hip, p.knee, p.ankle, 20 * u, bk ? color : '#FFFFFF', u); lab('knee ' + Math.round(a.knee), p.knee, 20 * u);
+      const hr = (bk ? 56 : 40) * u;
+      arcAt(c, below, p.hip, p.knee, hr, bk ? color : '#FFFFFF', u); lab('hip ' + Math.round(a.hip), p.hip, hr);
+    }
+    outlineText(c, (bk ? 'Back' : 'Main') + ' (' + s + '): hip ' + Math.round(a.hip) + '   shin ' + Math.round(a.shank) + '   ankle ' + Math.round(a.ankle),
+      16 * u, H - 18 * u - (bk ? 30 * u : 0), color, Math.round(17 * u));
+  }
+  // ring at the foot that just landed
+  for (const e of out.events) {
+    const age = i - e.i; if (age < 0 || age > state.flash) continue;
+    const p = pts[e.side]; if (!p || (e.side === out.far && !state.opts.back)) continue;
+    c.globalAlpha = Math.max(0, 1 - age / state.flash); c.beginPath(); c.arc(p.ankle[0], p.ankle[1], (14 + age * 2) * u, 0, 6.2832);
+    c.strokeStyle = C_ACCENT; c.lineWidth = 3 * u; c.stroke(); c.globalAlpha = 1;
+  }
+  // top-left box
+  const r = out.result, who = (r.runner || 'Runner').toUpperCase();
+  const lines = ['RUNNINGFORM AI   ' + who, r.cadence ? 'Cadence  ' + Math.round(r.cadence) + ' steps/min' : 'Cadence  --',
+    'Peak hip flexion ' + (out.hipFlex == null ? '--' : Math.round(out.hipFlex)) + ' deg (knee lift)'];
+  c.font = '500 ' + Math.round(17 * u) + 'px Barlow, system-ui, sans-serif'; c.textAlign = 'left';
+  const bw = Math.max(...lines.map(s => c.measureText(s).width)) + 36 * u, lh = 28 * u, bh = lh * lines.length + 14 * u;
+  c.fillStyle = 'rgba(28,24,20,0.72)'; c.fillRect(16 * u, 16 * u, bw, bh);
+  c.fillStyle = C_ACCENT; c.fillRect(16 * u, 16 * u, 5 * u, bh);
+  c.fillStyle = '#FFFFFF'; lines.forEach((s, k) => c.fillText(s, 34 * u, 16 * u + 7 * u + lh * (k + 0.75)));
+}
+
+/* ---------- the player ---------- */
+const frameNow = () => Math.max(0, Math.min(state.N - 1, Math.floor(vid.currentTime * state.fps + 1e-6)));
+function updateCounter(i) {
+  $('counter').textContent = 'Frame ' + (i + 1) + ' of ' + state.N + ' (' + ((i + 0.5) / state.fps).toFixed(2) + ' s)';
+  if (document.activeElement !== $('scrub')) $('scrub').value = i;
+}
+function tick() {
+  if (!state.live) return;
+  if (!state.exporting) {
+    const i = frameNow();
+    if (i !== state.lastDrawn || state.redraw) { drawFrame(ctx, i); state.lastDrawn = i; state.redraw = false; updateCounter(i); }
+  }
+  requestAnimationFrame(tick);
+}
+function setPlayLabel() { $('bPlay').textContent = vid.paused ? 'Play' : 'Pause'; }
+vid.addEventListener('play', setPlayLabel); vid.addEventListener('pause', setPlayLabel);
+vid.addEventListener('seeked', () => { state.redraw = true; });
+async function stepTo(i) {
+  i = Math.max(0, Math.min(state.N - 1, i));
+  vid.pause(); await seekTo(vid, (i + 0.5) / state.fps); state.redraw = true;
+}
+$('bPlay').addEventListener('click', () => { if (state.exporting) return; if (vid.paused) { if (vid.ended) vid.currentTime = 0; vid.play().catch(() => {}); } else vid.pause(); });
+$('bPrev').addEventListener('click', () => { if (!state.exporting) stepTo(frameNow() - 1); });
+$('bNext').addEventListener('click', () => { if (!state.exporting) stepTo(frameNow() + 1); });
+$('scrub').addEventListener('input', e => { if (!state.exporting) stepTo(+e.target.value); });
+document.querySelectorAll('input[name=spd]').forEach(r => r.addEventListener('change', () => { vid.playbackRate = +r.value; }));
+$('oBack').addEventListener('change', e => { state.opts.back = e.target.checked; state.redraw = true; });
+$('oAng').addEventListener('change', e => { state.opts.angles = e.target.checked; state.redraw = true; });
+$('oSkel').addEventListener('change', e => { state.opts.skeleton = e.target.checked; state.redraw = true; });
+document.addEventListener('keydown', e => {
+  if ($('sResults').hidden || state.exporting) return;
+  if (e.target.matches && e.target.matches('input[type=text],input[type=number],textarea')) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); stepTo(frameNow() + 1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); stepTo(frameNow() - 1); }
+  else if ((e.key === ' ' || e.key === 'k') && !(e.target.matches && e.target.matches('button,input'))) { e.preventDefault(); $('bPlay').click(); }
+});
+
+/* ---------- report (same layout as the desktop app) ---------- */
+/* ---------- report ---------- */
+function footSub(v){ return v >= 10 ? 'Heel strike' : v > -2 ? 'Midfoot strike' : 'Forefoot strike'; }
+const SUB = { foot: v => footSub(v), flex: () => 'How high the knee comes up. 90° is knee level with the hip.' };
+function reportHTML(r){
+  const date = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  const mins = r.duration_s >= 60 ? Math.floor(r.duration_s / 60) + ' min ' + Math.round(r.duration_s % 60) + ' s' : Math.round(r.duration_s) + ' seconds';
+  const rows = r.measures.map(m => `
+    <div class="mrow">
+      <div class="mname">${esc(m.label)}${SUB[m.id] ? `<span class="msub">${SUB[m.id](m.value)}</span>` : ''}</div>
+      <div class="mval"><b>${num(m.value, m.id === 'lean' ? 1 : 0)}</b>${esc(m.unit)}</div>
+      <div class="mstat"><span class="chip ${m.status}">${LABEL[m.status]}</span><span>${m.reason ? esc(m.reason) : 'Target ' + esc(m.target)}</span></div>
+    </div>`).join('');
+
+  const mainSide = r.legs.main ? r.legs.main.side : r.near_side, backSide = r.legs.back ? r.legs.back.side : r.far_side;
+  const cell = (leg, grp, k, d=0) => leg && leg[grp] && leg[grp][k] != null ? `<td class="n">${num(leg[grp][k], d)}°</td>` : '<td class="dash">not tracked</td>';
+  const head = `<thead><tr><th scope="col">Joint</th><th scope="col">Main (${esc(mainSide)})</th><th scope="col">Back (${esc(backSide)})</th></tr></thead>`;
+  const jr = (label, desc, grp, k) => `<tr><th scope="row">${label}<span class="tdesc">${desc}</span></th>${cell(r.legs.main, grp, k)}${cell(r.legs.back, grp, k)}</tr>`;
+  const landing = `<div class="tblwrap"><table>${head}<tbody>
+      ${jr('Ankle', 'Angle between shin and foot', 'landing', 'ankle')}
+      ${jr('Knee', '180° is a straight leg', 'landing', 'knee')}
+      ${jr('Hip flexion', 'Trunk to thigh; + means the knee is in front', 'landing', 'hip')}
+      ${jr('Shin (shank)', 'From vertical; + means the foot is ahead of the knee', 'landing', 'shank')}
+      ${jr('Foot to ground', '+ means toes higher than heel', 'landing', 'foot')}
+      <tr><th scope="row">Trunk lean<span class="tdesc">Forward lean from vertical</span></th><td class="n" colspan="2" style="text-align:center">${num(r.landing.lean, 1)}°</td></tr>
+    </tbody></table></div>`;
+  const hasPush = (r.legs.main && r.legs.main.pushoff) || (r.legs.back && r.legs.back.pushoff);
+  const push = hasPush ? `<div class="tblwrap"><table>${head}<tbody>
+      ${jr('Ankle', 'Angle between shin and foot', 'pushoff', 'ankle')}
+      ${jr('Knee', '180° is a straight leg', 'pushoff', 'knee')}
+      ${jr('Hip flexion', 'Trunk to thigh; − means the leg trails behind the body', 'pushoff', 'hip')}
+      ${jr('Foot to ground', '− means toes pointing down', 'pushoff', 'foot')}
+    </tbody></table></div>` : '<p class="cap">Push-off angles weren\'t tracked well enough in this video.</p>';
+
+  const rc = (leg, k) => leg && leg[k] != null ? `<td class="n">${num(leg[k], 0)}°</td>` : '<td class="dash">not tracked</td>';
+  const hasHip = (r.legs.main && r.legs.main.hip_flex != null) || (r.legs.back && r.legs.back.hip_flex != null);
+  const hipTbl = hasHip ? `<div class="rsec"><h3>Hip flexion: how high your knee goes</h3><div class="tblwrap"><table>${head}<tbody>
+      <tr><th scope="row">Peak hip flexion<span class="tdesc">The angle between your trunk and your thigh at the top of each step. 90° means the knee is level with the hip.</span></th>${rc(r.legs.main, 'hip_flex')}${rc(r.legs.back, 'hip_flex')}</tr>
+    </tbody></table></div>
+    <p class="cap">Measured at the top of every stride. It grows with running speed, so a slow jog or running in place reads lower than a real run.</p></div>` : '';
+
+  const notes = r.notes.length ? r.notes.map(n => `
+    <section class="note ${n.level}"><h3>${esc(n.title)}</h3><p class="saw">${esc(n.saw)}</p><p>${esc(n.why)}</p><p class="tip">Try this: ${esc(n.tip)}</p></section>`).join('')
+    : '<section class="note"><h3>Form looks steady.</h3><p>Every measurement sits inside its target range. Keep doing what you\'re doing.</p></section>';
+  const good = r.strengths.length ? `<div class="rsec"><h3>What's working</h3><ul class="good">${r.strengths.map(s => `<li>${esc(s)}</li>`).join('')}</ul></div>` : '';
+  const warn = r.warnings.length ? `<div class="rsec"><div class="warn"><strong>About this analysis</strong><ul>${r.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div></div>` : '';
+
+  return `
+    <div class="rhead"><h2>${r.runner ? esc(r.runner) + '\'s running form' : 'Your running form'}</h2>
+      <span class="meta">${esc(date)}. ${r.steps} steps over ${esc(mins)}, analyzed at ${Math.round(r.fps)} fps${r.height_cm ? ', runner height ' + Math.round(r.height_cm) + ' cm' : ''}.</span></div>
+    <div class="focus"><div class="k">Coach summary</div><div class="v">${esc(r.focus)}</div></div>
+    <div class="rsec"><h3>Key measurements</h3>${rows}</div>
+    <div class="rsec"><h3>Joint angles at landing</h3>${landing}
+      <p class="cap">Landing is the moment the foot is furthest in front of the hip. Each number is the median across all ${r.steps} landings.</p></div>
+    <div class="rsec"><h3>Joint angles at push-off</h3>${push}
+      <p class="cap">Push-off is the moment the foot is furthest behind the hip, as the leg drives off the ground.</p></div>
+    ${hipTbl}
+    <div class="rsec"><h3>What to work on</h3><div class="notes">${notes}</div></div>
+    ${good}${warn}
+    <details><summary>How these angles are measured</summary><ul>
+      <li>The skeleton comes from an AI pose model that finds each joint in every video frame.</li>
+      <li>The angles are measured in 2D from one camera, so they're most accurate with a true side view.</li>
+      <li>The ankle angle is the angle between the shin and the foot. Compare it across runs rather than treating it as an absolute value.</li>
+      <li>Knee: 180° is a straight leg. Shin: the shin's angle from vertical. Trunk lean: the torso's forward lean from vertical.</li>
+      <li>Hip flexion is the angle between your trunk and your thigh: 0° is standing straight, 90° is the knee level with the hip, and a negative number means the leg is behind your body. The peak value in each stride is how high your knee goes.</li>
+      <li>The back leg is partly hidden by the main leg, so its numbers are noisier.</li>
+    </ul></details>`;
+}
+
+
+
+/* ---------- results ---------- */
+function slug(r) { return 'RunningForm_' + (r.runner ? r.runner.trim().replace(/[^\w]+/g, '_') : 'run'); }
+function saveBlob(blob, filename) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function showResults(out, lms, info) {
+  Object.assign(state, { out, lms, fps: info.fps, N: info.n, W: info.W, H: info.H, flash: Math.max(6, Math.floor(info.fps * 0.5)), lastDrawn: -1, redraw: true });
+  cv.width = info.W; cv.height = info.H;
+  $('scrub').max = info.n - 1; $('scrub').value = 0;
+  const r = out.result;
+  $('report').innerHTML = reportHTML(r);
+  $('lgMain').textContent = 'Main (' + r.near_side + ')'; $('lgBack').textContent = 'Back (' + r.far_side + ')';
+  document.querySelector('input[name=spd][value="1"]').checked = true;
+  vid.playbackRate = 1; vid.loop = true; vid.currentTime = 0.5 / info.fps;
+  show('sResults');
+  state.live = true; tick();
+  vid.play().catch(() => {});
+  $('report').focus({ preventScroll: true });
+  const canRecord = !!(window.MediaRecorder && cv.captureStream);
+  $('saveVideo').disabled = !canRecord; $('saveVideo').title = canRecord ? '' : "This browser can't save video. Try Chrome, Edge, Safari or Firefox.";
+}
+
+function pickMime() {
+  const c = ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  return c.find(m => MediaRecorder.isTypeSupported(m)) || '';
+}
+function exportUI(on, text) {
+  $('saveVideo').disabled = on; $('saveReport').disabled = on; $('again').disabled = on;
+  $('vstatus').textContent = text || ''; $('vstatus').hidden = !text; $('stopExport').hidden = !on;
+}
+async function saveVideo() {
+  if (state.exporting || !state.out) return;
+  const mime = pickMime(), W = state.W, H = state.H, dur = state.N / state.fps;
+  state.exporting = true; state.stopExport = false;
+  exportUI(true, 'Saving video… 0%');
+  const rc = document.createElement('canvas'); rc.width = W; rc.height = H;
+  const rctx = rc.getContext('2d'), stream = rc.captureStream(state.fps), chunks = [];
+  const rec = new MediaRecorder(stream, Object.assign({ videoBitsPerSecond: 8e6 }, mime ? { mimeType: mime } : {}));
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  const stopped = new Promise(res => { rec.onstop = res; });
+  const prevRate = vid.playbackRate;
+  let msg = '';
+  try {
+    vid.pause(); vid.loop = false; vid.playbackRate = 1;
+    await seekTo(vid, 0.5 / state.fps); drawFrame(rctx, 0);
+    rec.start(250);
+    await vid.play();
+    await new Promise(res => {
+      const step = () => {
+        drawFrame(rctx, frameNow());
+        const p = Math.min(1, vid.currentTime / dur);
+        $('vstatus').textContent = 'Saving video… ' + Math.round(p * 100) + '%';
+        if (vid.ended || vid.currentTime >= dur - 0.03 || state.stopExport) res(); else requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+    vid.pause(); rec.stop(); await stopped; stream.getTracks().forEach(t => t.stop());
+    if (!state.stopExport && chunks.length) {
+      const type = rec.mimeType || mime || 'video/webm';
+      saveBlob(new Blob(chunks, { type }), slug(state.out.result) + '_overlay.' + (type.includes('mp4') ? 'mp4' : 'webm'));
+    }
+  } catch (e) { console.error(e); msg = 'Sorry, the video could not be saved in this browser.'; }
+  vid.loop = true; vid.playbackRate = prevRate; state.exporting = false; state.redraw = true;
+  exportUI(false, state.stopExport ? 'Saving cancelled.' : msg);
+  await seekTo(vid, 0.5 / state.fps); vid.play().catch(() => {});
+}
+$('saveVideo').addEventListener('click', saveVideo);
+$('stopExport').addEventListener('click', () => { state.stopExport = true; });
+$('csvLink').addEventListener('click', e => {
+  e.preventDefault(); if (!state.out) return;
+  saveBlob(new Blob([RFA.rowsToCsv(state.out.rows)], { type: 'text/csv' }), slug(state.out.result) + '_angles.csv');
+});
+$('saveReport').addEventListener('click', () => {
+  const o = state.out; if (!o) return; const r = o.result;
+  const css = document.querySelector('style').textContent;
+  const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>' + esc(r.runner ? r.runner + ' - ' : '') + 'RunningForm report</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">' +
+    '<style>' + css + '</style></head><body><header class="top"><div class="wrap"><div><h1>RunningForm Analyzer/AI</h1><p>Running form report</p></div></div></header>' +
+    '<main class="wrap"><article class="report" style="margin-top:0">' + $('report').innerHTML + '</article>' +
+    "<p class=\"fine\">Angles are estimates from a single camera, for coaching purposes. They aren't a medical assessment or an injury diagnosis.</p></main></body></html>";
+  saveBlob(new Blob([html], { type: 'text/html' }), slug(r) + '_' + new Date().toISOString().slice(0, 10) + '_report.html');
+});
+$('again').addEventListener('click', () => {
+  state.live = false; vid.pause(); vid.removeAttribute('src'); vid.load();
+  if (state.url) { URL.revokeObjectURL(state.url); state.url = null; }
+  state.out = null; state.lms = null; clearFile(); $('runner').value = ''; show('sUpload');
+});
+
+/* ---------- is this browser able to run it? ---------- */
+if (typeof WebAssembly !== 'object') setError('This browser is too old to run the analysis. Please use a current version of Chrome, Edge, Safari or Firefox.');
+window.__rf = { state };      // handy for debugging in the console
+})();
+
+</script>
+</body>
+</html>
