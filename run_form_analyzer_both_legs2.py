@@ -47,6 +47,7 @@ from scipy.signal import find_peaks, savgol_filter
 
 KEYS = ("shoulder", "hip", "knee", "ankle", "heel", "toe")
 BGR_TEAL, BGR_AMBER, BGR_WHITE = (212, 234, 94), (32, 176, 255), (255, 255, 255)
+
 BGR_GREEN = (60, 220, 60)
 BGR_FAR = (255, 150, 120)      # back leg: light blue
 CSV_FIELDS = [
@@ -56,10 +57,10 @@ CSV_FIELDS = [
     "trunk_lean_deg",
 ]
 
-# ----------------------------------------------------------------------------
+
 # Geometry (image coordinates: x to the right, y DOWN). `facing` is +1 if the
 # runner faces right in the image, -1 if they face left.
-# ----------------------------------------------------------------------------
+
 def angle_at(a, b, c):
     """Interior angle in degrees at point b between segments b->a and b->c."""
     v1, v2 = np.asarray(a, float) - b, np.asarray(c, float) - b
@@ -110,9 +111,9 @@ def fill_nan(arr):
     return out
 
 
-# ----------------------------------------------------------------------------
+
 # Recording and analysis
-# ----------------------------------------------------------------------------
+
 class Recorder:
     """Stores landmark positions (pixels) for both legs, frame by frame."""
 
@@ -241,13 +242,13 @@ def coach(m):
     if m.get("hip_flex") is not None and m["hip_flex"] < 30:
         tips.append(f"Drive the knee up more: your hip flexes {m['hip_flex']:.0f} degrees at the top of each step "
                     "(90 = knee level with the hip). Try A-skips or high-knee drills before runs. "
-                    "(It grows with speed, so slow jogging or running in place reads lower.)")
+                    "(It grows with speed, so a slow jog reads lower than a real run.)")
     return tips or ["Everything sits inside the target bands. Nice, steady form."]
 
 
-# ----------------------------------------------------------------------------
+
 # Drawing helpers
-# ----------------------------------------------------------------------------
+
 def put_text(img, text, org, color=BGR_WHITE, scale=0.6, thick=1):
     import cv2
     cv2.putText(img, text, org, cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), thick + 2, cv2.LINE_AA)
@@ -282,9 +283,9 @@ def draw_angle(img, a, b, c, label, color=BGR_AMBER, radius=30, dy=5):
     put_text(img, label, (int(b[0]) + radius + 6, int(b[1]) + dy), color)
 
 
-# ----------------------------------------------------------------------------
+
 # Main loop
-# ----------------------------------------------------------------------------
+
 def run(args):
     import cv2
     import mediapipe as mp
