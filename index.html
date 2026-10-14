@@ -581,7 +581,7 @@ function buildReport(A, fps, heightCm, trackedPct, near, far) {
     'foot|low': () => ['You are landing on your toes.', 'The foot is pointed ' + Math.abs(n('foot')) + ' degrees toe-down at contact.',
       'Forefoot landings load the calf and Achilles more.', 'Let the heel touch down gently after the ball of the foot.'],
     'flex|low': () => ["Your knee isn't coming up much.", 'Your hip flexes ' + val('flex') + ' degrees at the top of each step (90 is the knee level with the hip).',
-      'A low knee drive shortens your stride and can leave the foot swinging out in front of you. It also rises with speed, so a slow jog or running in place reads lower.',
+      'A low knee drive shortens your stride and can leave the foot swinging out in front of you. It also rises with speed, so a slow jog reads lower than a real run.',
       'Drive the knee up and forward, then let the foot drop under your hips. Add two sets of A-skips or high-knee drills before runs.'],
     'lean|low': () => ['You are running tall and upright.', 'Trunk lean is ' + val('lean') + ' degrees.',
       'A small forward lean from the ankles lets you fall into each step instead of reaching for it.',
@@ -1022,7 +1022,7 @@ function reportHTML(r){
   const hipTbl = hasHip ? `<div class="rsec"><h3>Hip flexion: how high your knee goes</h3><div class="tblwrap"><table>${head}<tbody>
       <tr><th scope="row">Peak hip flexion<span class="tdesc">The angle between your trunk and your thigh at the top of each step. 90° means the knee is level with the hip.</span></th>${rc(r.legs.main, 'hip_flex')}${rc(r.legs.back, 'hip_flex')}</tr>
     </tbody></table></div>
-    <p class="cap">Measured at the top of every stride. It grows with running speed, so a slow jog or running in place reads lower than a real run.</p></div>` : '';
+    <p class="cap">Measured at the top of every stride. It grows with running speed, so a slow jog reads lower than a real run.</p></div>` : '';
 
   const notes = r.notes.length ? r.notes.map(n => `
     <section class="note ${n.level}"><h3>${esc(n.title)}</h3><p class="saw">${esc(n.saw)}</p><p>${esc(n.why)}</p><p class="tip">Try this: ${esc(n.tip)}</p></section>`).join('')
